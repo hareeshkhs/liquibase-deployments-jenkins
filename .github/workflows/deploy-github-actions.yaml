@@ -19,12 +19,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Verify EC2 Connectivity
+        run: |
+          echo "Testing connection to ${{ secrets.POSTGRES_HOST }}..."
+          nc -zv ${{ secrets.POSTGRES_HOST }} 22
+          echo "Connection test passed."
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.POSTGRES_HOST }}
           username: ${{ secrets.POSTGRES_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          timeout: 30s
           script: |
             echo "Installing Docker..."
             sudo apt-get update
