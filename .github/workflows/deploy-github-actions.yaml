@@ -53,18 +53,17 @@ jobs:
             echo "Logging into GitHub Container Registry (GHCR)..."
             echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            IMAGE="ghcr.io/${{ github.repository }}:${{ github.event.inputs.image_tag }}"
+            IMAGE="ghcr.io/hareeshkhs/liquibase-schema-manager::${{ github.event.inputs.image_tag }}"
             CONTAINER_NAME="schema-manager"
 
-            echo "Removing existing container if exists..."
-            sudo docker rm -f $CONTAINER_NAME || true
+            # echo "Removing existing container if exists..."
+            # sudo docker rm -f $CONTAINER_NAME || true
 
             echo "Pulling image $IMAGE..."
             sudo docker pull $IMAGE
 
             echo "Running container $CONTAINER_NAME..."
-            sudo docker run -d \
-              --name $CONTAINER_NAME \
+            sudo docker run -it --rm \
               -e POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} \
               -e POSTGRES_DB=${{ github.event.inputs.db_name }} \
               -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
@@ -72,6 +71,6 @@ jobs:
               -e EMAIL_APP_PASSCODE=${{ secrets.EMAIL_APP_PASSCODE }} \
               $IMAGE
 
-            # Check if the container started successfully
-            sudo docker ps -a | grep $CONTAINER_NAME
-            sudo docker logs $CONTAINER_NAME
+            # # Check if the container started successfully
+            # sudo docker ps -a | grep $CONTAINER_NAME
+            # sudo docker logs $CONTAINER_NAME
