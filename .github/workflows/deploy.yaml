@@ -24,13 +24,14 @@ jobs:
 
       - name: Trigger Jenkins Job
         env:
-          JENKINS_URL: http://localhost:8080
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
           JENKINS_JOB: schema-deploy
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ inputs.image_tag }}
           AVAILABLE_SCHEMAS: ${{ inputs.available_schemas }}
           DB_NAME: ${{ inputs.db_name }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           EMAIL_APP_PASSCODE: ${{ secrets.EMAIL_APP_PASSCODE }}
@@ -39,8 +40,8 @@ jobs:
           echo "Triggering Jenkins job..."
 
           curl -X POST "$JENKINS_URL/job/$JENKINS_JOB/buildWithParameters" \
-            --data-urlencode "token=mytrigger123" \
-            --data-urlencode "TAG=$TAG" \
+            --user "$JENKINS_USER:$JENKINS_API_TOKEN" \
+            --data-urlencode "TAG=$" \
             --data-urlencode "POSTGRES_DB=$DB_NAME" \
             --data-urlencode "AVAILABLE_SCHEMAS=$AVAILABLE_SCHEMAS" \
             --data-urlencode "POSTGRES_HOST=$POSTGRES_HOST" \
