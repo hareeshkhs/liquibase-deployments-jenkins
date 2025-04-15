@@ -34,6 +34,9 @@ jobs:
           port: 22
           timeout: 30s
           script: |
+            # Debug: Show actual host being connected to
+            echo "ACTUAL HOST BEING CONNECTED: ${{ secrets.POSTGRES_HOST }}"
+
             echo "Installing Docker..."
             sudo apt-get update
             sudo apt-get install -y docker.io
