@@ -1,0 +1,54 @@
+name: Deploy Schema via Jenkins
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag (e.g., v1.0.0)"
+        required: true
+      db_name:
+        description: "PostgreSQL database name"
+        required: true
+      available_schemas:
+        description: "Available Schemas to deploy"
+        required: true
+
+jobs:
+  trigger-jenkins-deployment:
+    name: Trigger Jenkins Job
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Trigger Jenkins Job
+        env:
+          JENKINS_URL: http://localhost:8080
+          JENKINS_JOB: schema-deploy
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          AVAILABLE_SCHEMAS: ${{ inputs.available_schemas }}
+          DB_NAME: ${{ inputs.db_name }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          EMAIL_APP_PASSCODE: ${{ secrets.EMAIL_APP_PASSCODE }}
+          CONTAINER_NAME: schema-manager
+        run: |
+          echo "Triggering Jenkins job..."
+
+          curl -X POST "$JENKINS_URL/job/$JENKINS_JOB/buildWithParameters" \
+            --data-urlencode "token=mytrigger123" \
+            --data-urlencode "TAG=$TAG" \
+            --data-urlencode "POSTGRES_DB=$DB_NAME" \
+            --data-urlencode "AVAILABLE_SCHEMAS=$AVAILABLE_SCHEMAS" \
+            --data-urlencode "POSTGRES_HOST=$POSTGRES_HOST" \
+            --data-urlencode "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
+            --data-urlencode "POSTGRES_USER=$POSTGRES_USER" \
+            --data-urlencode "EMAIL_APP_PASSCODE=$EMAIL_APP_PASSCODE" \
+            --data-urlencode "CONTAINER_NAME=$CONTAINER_NAME" \
+            --fail
+
+      - name: Success Message
+        run: echo "✅ Jenkins job triggered with TAG=$TAG and DATABASE=$DB_NAME"
