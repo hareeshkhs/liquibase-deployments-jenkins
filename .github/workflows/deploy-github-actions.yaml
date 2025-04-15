@@ -34,8 +34,14 @@ jobs:
           port: 22
           timeout: 30s
           script: |
-            # Debug: Show actual host being connected to
-            echo "ACTUAL HOST BEING CONNECTED: ${{ secrets.POSTGRES_HOST }}"
+            # First verify key was properly passed
+            mkdir -p ~/.ssh
+            echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+            ssh-keyscan ${{ secrets.POSTGRES_HOST }} >> ~/.ssh/known_hosts
+                  
+            # Test connection
+            ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.POSTGRES_HOST }} echo "SSH connection successful!"
 
             echo "Installing Docker..."
             sudo apt-get update
