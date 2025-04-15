@@ -65,6 +65,9 @@ jobs:
             echo "Running container $CONTAINER_NAME..."
             sudo docker run -d \
               --name $CONTAINER_NAME \
+              --network host \
+              -e TESTCONTAINERS_DISABLE=true \
+              -e DOCKER_HOST=unix:///nonexistent \
               -e POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} \
               -e POSTGRES_DB=${{ github.event.inputs.db_name }} \
               -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
