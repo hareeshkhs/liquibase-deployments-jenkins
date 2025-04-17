@@ -22,17 +22,35 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Fetch Jenkins Crumb
+        id: get-crumb
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+        run: |
+          echo "Fetching Jenkins crumb..."
+          crumb_json=$(curl -s --user "$JENKINS_USER:$JENKINS_API_TOKEN" "$JENKINS_URL/crumbIssuer/api/json")
+          echo "Crumb JSON: $crumb_json"
+          crumb=$(echo "$crumb_json" | jq -r '.crumb')
+          crumb_field=$(echo "$crumb_json" | jq -r '.crumbRequestField')
+          echo "crumb=$crumb" >> $GITHUB_OUTPUT
+          echo "crumb_field=$crumb_field" >> $GITHUB_OUTPUT
+
       - name: Trigger Jenkins Job
         env:
           JENKINS_URL: ${{ secrets.JENKINS_URL }}
           JENKINS_JOB: Schema-Deploy
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+          CRUMB: ${{ steps.get-crumb.outputs.crumb }}
+          CRUMB_FIELD: ${{ steps.get-crumb.outputs.crumb_field }}
         run: |
           echo "Triggering Jenkins job for TAG=${{ inputs.image_tag }} on DB=${{ inputs.db_name }}"
 
           curl -X POST "$JENKINS_URL/job/$JENKINS_JOB/buildWithParameters" \
             --user "$JENKINS_USER:$JENKINS_API_TOKEN" \
+            -H "$CRUMB_FIELD: $CRUMB" \
             --data-urlencode "TAG=${{ inputs.image_tag }}" \
             --data-urlencode "POSTGRES_DB=${{ inputs.db_name }}" \
             --data-urlencode "AVAILABLE_SCHEMAS=${{ inputs.available_schemas }}" \
@@ -45,20 +63,3 @@ jobs:
 
       - name: ✅ Success Message
         run: echo "Jenkins job triggered successfully for image_tag=${{ inputs.image_tag }} and db=${{ inputs.db_name }}"
-
-
-CRUMB=$(curl -u "admin:853aeda36d014bb6a5978ef35cf6a2c2" "http://13.203.206.90:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)")
-curl -u admin:853aeda36d014bb6a5978ef35cf6a2c2 http://13.203.206.90:8080/crumbIssuer/api/json
-curl -X POST "http://13.203.206.90:8080/job/Schema-Deploy/buildWithParameters" \
-    --user "admin:853aeda36d014bb6a5978ef35cf6a2c2" \
-    -H "$CRUMB" \
-    --data-urlencode "TAG=v1.0.0" \
-    --data-urlencode "POSTGRES_DB=merchant_db" \
-    --data-urlencode "AVAILABLE_SCHEMAS=postgres/merchant_template" \
-    --data-urlencode "POSTGRES_HOST=13.203.206.90" \
-    --data-urlencode "POSTGRES_PASSWORD=Admin123" \
-    --data-urlencode "POSTGRES_USER=admin" \
-    --data-urlencode "EMAIL_APP_PASSCODE=***" \
-    --data-urlencode "CONTAINER_NAME=schema-manager" \
-    --fail
-
