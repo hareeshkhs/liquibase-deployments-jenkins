@@ -45,3 +45,20 @@ jobs:
 
       - name: ✅ Success Message
         run: echo "Jenkins job triggered successfully for image_tag=${{ inputs.image_tag }} and db=${{ inputs.db_name }}"
+
+
+CRUMB=$(curl -u "admin:853aeda36d014bb6a5978ef35cf6a2c2" "http://13.203.206.90:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)")
+curl -u admin:853aeda36d014bb6a5978ef35cf6a2c2 http://13.203.206.90:8080/crumbIssuer/api/json
+curl -X POST "http://13.203.206.90:8080/job/Schema-Deploy/buildWithParameters" \
+    --user "admin:853aeda36d014bb6a5978ef35cf6a2c2" \
+    -H "$CRUMB" \
+    --data-urlencode "TAG=v1.0.0" \
+    --data-urlencode "POSTGRES_DB=merchant_db" \
+    --data-urlencode "AVAILABLE_SCHEMAS=postgres/merchant_template" \
+    --data-urlencode "POSTGRES_HOST=13.203.206.90" \
+    --data-urlencode "POSTGRES_PASSWORD=Admin123" \
+    --data-urlencode "POSTGRES_USER=admin" \
+    --data-urlencode "EMAIL_APP_PASSCODE=***" \
+    --data-urlencode "CONTAINER_NAME=schema-manager" \
+    --fail
+
